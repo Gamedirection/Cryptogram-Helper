@@ -13,7 +13,6 @@
   --button-border: #888888;
   --button-hover-bg: #f0f0f0;
 }
-
 /* Dark theme overrides */
 body.dark-mode {
   --bg-color: #1e1e1e;
@@ -24,7 +23,6 @@ body.dark-mode {
   --button-border: #888888;
   --button-hover-bg: #444444;
 }
-
 /* Highlight states (used for letters, mapping inputs, and output) */
 /* Made much more visible with solid backgrounds and borders */
 .highlight-none {
@@ -47,7 +45,6 @@ body.dark-mode {
   border-color: #e74c3c !important;
   color: #ffffff !important;
 }
-
 /* Base styles (font unchanged) */
 body {
   font-family: Arial, sans-serif;
@@ -127,7 +124,6 @@ textarea {
   margin-bottom: 6px;
   box-sizing: border-box;
 }
-
 /* keep original appearance for inputText */
 #inputText {
   background: var(--box-bg);
@@ -144,13 +140,11 @@ textarea {
   font-family: monospace;
   font-size: 14px;
 }
-
 /* Adjust output/notes background to respect theme */
 body.dark-mode .output-box {
   background: var(--box-bg);
   border-color: var(--box-border);
 }
-
 /* Notes area */
 #notes {
   width: 100%;
@@ -186,7 +180,6 @@ button:hover {
 body.dark-mode #copyStatus {
   color: #aaaaaa;
 }
-
 /* Top-right controls bar */
 .top-controls {
   display: flex;
@@ -195,12 +188,10 @@ body.dark-mode #copyStatus {
   margin-bottom: 10px;
   flex-wrap: wrap;
 }
-
 .small-btn {
   font-size: 11px;
   padding: 3px 6px;
 }
-
 /* Extra visual emphasis for mapped letter cells, without changing font */
 .mapping-input.has-value {
   font-weight: bold;
@@ -208,6 +199,23 @@ body.dark-mode #copyStatus {
 }
 body.dark-mode .mapping-input.has-value {
   border-color: #ddd;
+}
+
+/* Word + character-count display in output */
+.word-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 4px;
+}
+.word-text {
+  display: inline;
+}
+.word-count {
+  font-size: 10px;
+  line-height: 1;
+  margin-top: 2px;
+  opacity: 0.8;
 }
 </style>
 </head>
@@ -222,7 +230,6 @@ body.dark-mode .mapping-input.has-value {
   </div>
   <button id="themeToggleBtn" class="small-btn">Dark mode</button>
 </div>
-
 <h1>Cryptogram Letter Tracker</h1>
   
 <div class="small-note">
@@ -241,16 +248,22 @@ body.dark-mode .mapping-input.has-value {
 <textarea id="inputText" placeholder="Paste or type your cryptogram here (ex: ABC)..."></textarea>
   
 <h3>Transformed Output</h3>
+
+<div style="margin-bottom: 4px; font-size: 12px;">
+  <label>
+    <input type="checkbox" id="wordCountToggle">
+    Show character count per word
+  </label>
+</div>
+
 <div id="outputText" class="output-box"></div>
   
 <div style="margin-top: 8px;">
 <button id="copyBtn">Copy Output</button>
 <span id="copyStatus"></span>
 </div>
-
 <h2 style="margin-top: 20px;">Notes</h2>
 <textarea id="notes" placeholder="Write any solving notes, patterns, or observations here..."></textarea>
-
 <h2 style="margin-top: 20px;">How to Solve Cryptograms</h2>
 <details>
 <p>A cryptogram is a puzzle where a message is encoded with a simple substitution cipher. Each plaintext letter is consistently replaced by a different letter for the entire puzzle. Your goal is to decode the original text.</p>
@@ -282,10 +295,8 @@ const highlightStates = [
   "highlight-yellow",
   "highlight-red"
 ];
-
 const COOKIE_NAME = "cryptogramLetterMappings_highlighted";
 const COOKIE_DAYS = 365;
-
 const alphabetRow = document.getElementById("alphabetRow");
 const inputText = document.getElementById("inputText");
 const outputText = document.getElementById("outputText");
@@ -293,28 +304,24 @@ const resetBtn = document.getElementById("resetBtn");
 const copyBtn = document.getElementById("copyBtn");
 const copyStatus = document.getElementById("copyStatus");
 const notesEl = document.getElementById("notes");
-
+const wordCountToggle = document.getElementById("wordCountToggle");
 // Font size controls
 const fontSmallerBtn = document.getElementById("fontSmallerBtn");
 const fontResetBtn = document.getElementById("fontResetBtn");
 const fontLargerBtn = document.getElementById("fontLargerBtn");
-
 // Theme toggle
 const themeToggleBtn = document.getElementById("themeToggleBtn");
-
 // Defaults and state keys
 const DEFAULT_FONT_SIZE = 14;
 const FONT_STORAGE_KEY = "cryptogramFontSize";
 const THEME_STORAGE_KEY = "cryptogramTheme";
 const NOTES_STORAGE_KEY = "cryptogramNotes";
-
 function setCookie(name, value, days) {
   const d = new Date();
   d.setTime(d.getTime() + (days*24*60*60*1000));
   const expires = "expires=" + d.toUTCString();
   document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
 }
-
 function getCookie(name) {
   const cname = name + "=";
   const decodedCookie = decodeURIComponent(document.cookie);
@@ -327,7 +334,6 @@ function getCookie(name) {
   }
   return "";
 }
-
 function loadMappings() {
   const cookieVal = getCookie(COOKIE_NAME);
   if (!cookieVal) return {};
@@ -337,15 +343,12 @@ function loadMappings() {
     return {};
   }
 }
-
 function saveMappings() {
   setCookie(COOKIE_NAME, JSON.stringify(mappings), COOKIE_DAYS);
 }
-
 // { A: { char: "t", colorIndex: 0 }, ... }
 let mappings = loadMappings();
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
 // Ensure defaults
 letters.forEach(letter => {
   if (!mappings[letter]) {
@@ -355,7 +358,6 @@ letters.forEach(letter => {
     if (typeof mappings[letter].colorIndex !== "number") mappings[letter].colorIndex = 0;
   }
 });
-
 // Apply highlight to both cipher span and its input
 function applyHighlightToLetter(letter, colorIndex) {
   const cls = highlightStates[colorIndex] || "highlight-none";
@@ -371,10 +373,12 @@ function applyHighlightToLetter(letter, colorIndex) {
   });
 }
 
+// Build transformed output, with optional per-word counts
 function updateOutput() {
   const text = inputText.value;
-  outputText.innerHTML = "";  // we will build spans
 
+  // Build transformed spans linearly
+  const charSpans = [];
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     const upper = ch.toUpperCase();
@@ -386,69 +390,103 @@ function updateOutput() {
         const outChar = isUpper
           ? mappedChar.toUpperCase()
           : mappedChar.toLowerCase();
-
         const span = document.createElement("span");
         span.textContent = outChar;
-
         const colorIndex = map.colorIndex || 0;
         if (colorIndex > 0) {
           span.classList.add(highlightStates[colorIndex]);
         }
-
-        outputText.appendChild(span);
+        charSpans.push(span);
       } else {
         const span = document.createElement("span");
         span.textContent = ch;
-        outputText.appendChild(span);
+        charSpans.push(span);
       }
     } else {
       const span = document.createElement("span");
       span.textContent = ch;
-      outputText.appendChild(span);
+      charSpans.push(span);
     }
   }
+
+  // If word-count toggle is off, render flat
+  if (!wordCountToggle.checked) {
+    outputText.innerHTML = "";
+    charSpans.forEach(s => outputText.appendChild(s));
+    return;
+  }
+
+  // If on, group into words separated by spaces
+  outputText.innerHTML = "";
+  let currentWordSpans = [];
+  for (let i = 0; i < charSpans.length; i++) {
+    const span = charSpans[i];
+    const ch = span.textContent;
+    if (ch === " ") {
+      if (currentWordSpans.length > 0) {
+        appendWordBlock(currentWordSpans);
+        currentWordSpans = [];
+      }
+      outputText.appendChild(document.createTextNode(" "));
+    } else {
+      currentWordSpans.push(span);
+    }
+  }
+  if (currentWordSpans.length > 0) {
+    appendWordBlock(currentWordSpans);
+  }
+}
+
+// Helper: word + count
+function appendWordBlock(spans) {
+  const wordBlock = document.createElement("span");
+  wordBlock.className = "word-block";
+
+  const wordText = document.createElement("span");
+  wordText.className = "word-text";
+  spans.forEach(s => wordText.appendChild(s));
+  wordBlock.appendChild(wordText);
+
+  const countSpan = document.createElement("span");
+  countSpan.className = "word-count";
+  countSpan.textContent = spans.length.toString();
+  wordBlock.appendChild(countSpan);
+
+  outputText.appendChild(wordBlock);
 }
 
 // Build "A = [ ], B = [ ] ..." row
 letters.forEach((letter, index) => {
   const pair = document.createElement("span");
   pair.className = "letter-pair";
-
   const cipherSpan = document.createElement("span");
   cipherSpan.className = "cipher-letter";
   cipherSpan.textContent = letter;
   cipherSpan.dataset.letter = letter;
-
   const equalsSpan = document.createElement("span");
   equalsSpan.className = "equals-sign";
   equalsSpan.textContent = "=";
-
   const input = document.createElement("input");
   input.className = "mapping-input";
   input.type = "text";
   input.maxLength = 1;
   input.dataset.letter = letter;
-
   if (mappings[letter].char) {
     input.value = mappings[letter].char;
     input.classList.add("has-value");
   }
-
   pair.appendChild(cipherSpan);
   pair.appendChild(equalsSpan);
   pair.appendChild(input);
   alphabetRow.appendChild(pair);
-
   if (index < letters.length - 1) {
     const comma = document.createElement("span");
     comma.textContent = ",";
     comma.style.marginRight = "4px";
     alphabetRow.appendChild(comma);
   }
-
   // Apply initial highlight to both cipher letter and its input box
   applyHighlightToLetter(letter, mappings[letter].colorIndex);
-
   input.addEventListener("input", () => {
     const v = input.value ? input.value[0] : "";
     mappings[letter].char = v;
@@ -461,7 +499,6 @@ letters.forEach((letter, index) => {
     saveMappings();
     updateOutput();
   });
-
   cipherSpan.addEventListener("click", () => {
     let idx = mappings[letter].colorIndex || 0;
     idx = (idx + 1) % highlightStates.length;
@@ -471,33 +508,56 @@ letters.forEach((letter, index) => {
     updateOutput();
   });
 });
-
 inputText.addEventListener("input", updateOutput);
-
+wordCountToggle.addEventListener("change", updateOutput);
 resetBtn.addEventListener("click", () => {
   if (!confirm("Clear all mappings and colors?")) return;
-
   letters.forEach(letter => {
     mappings[letter] = { char: "", colorIndex: 0 };
   });
-
   document.querySelectorAll(".mapping-input").forEach(inp => {
     inp.value = "";
     inp.classList.remove("has-value");
   });
   letters.forEach(letter => applyHighlightToLetter(letter, 0));
-
   saveMappings();
   updateOutput();
 });
-
 copyBtn.addEventListener("click", () => {
-  const text = outputText.textContent;
+  let text = "";
+
+  if (!wordCountToggle.checked) {
+    // Simple case: no word blocks, just grab all text
+    text = outputText.textContent;
+  } else {
+    // Word-count mode: skip the count lines
+    const nodes = outputText.childNodes;
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        // Spaces or other raw text between word blocks
+        text += node.textContent;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.classList.contains("word-block")) {
+          const wordTextEl = node.querySelector(".word-text");
+          if (wordTextEl) {
+            text += wordTextEl.textContent;
+          }
+        } else {
+          // Any other element: include its text
+          text += node.textContent;
+        }
+      }
+    }
+  }
+
   if (!text) {
     copyStatus.textContent = "Nothing to copy.";
     setTimeout(() => copyStatus.textContent = "", 1500);
     return;
   }
+
   navigator.clipboard.writeText(text).then(() => {
     copyStatus.textContent = "Copied.";
     setTimeout(() => copyStatus.textContent = "", 1500);
@@ -506,7 +566,6 @@ copyBtn.addEventListener("click", () => {
     setTimeout(() => copyStatus.textContent = "", 1500);
   });
 });
-
 /* Notes persistence */
 function loadNotes() {
   const stored = localStorage.getItem(NOTES_STORAGE_KEY);
@@ -517,14 +576,12 @@ function loadNotes() {
 notesEl.addEventListener("input", () => {
   localStorage.setItem(NOTES_STORAGE_KEY, notesEl.value);
 });
-
 /* Font size controls - do not change font, only scale size */
 function applyFontSize(size) {
   inputText.style.fontSize = size + "px";
   outputText.style.fontSize = size + "px";
   notesEl.style.fontSize = size + "px";
 }
-
 function loadFontSize() {
   const stored = localStorage.getItem(FONT_STORAGE_KEY);
   let size = DEFAULT_FONT_SIZE;
@@ -537,27 +594,22 @@ function loadFontSize() {
   applyFontSize(size);
   return size;
 }
-
 let currentFontSize = loadFontSize();
-
 fontSmallerBtn.addEventListener("click", () => {
   currentFontSize = Math.max(8, currentFontSize - 1);
   applyFontSize(currentFontSize);
   localStorage.setItem(FONT_STORAGE_KEY, currentFontSize);
 });
-
 fontLargerBtn.addEventListener("click", () => {
   currentFontSize = Math.min(40, currentFontSize + 1);
   applyFontSize(currentFontSize);
   localStorage.setItem(FONT_STORAGE_KEY, currentFontSize);
 });
-
 fontResetBtn.addEventListener("click", () => {
   currentFontSize = DEFAULT_FONT_SIZE;
   applyFontSize(currentFontSize);
   localStorage.setItem(FONT_STORAGE_KEY, currentFontSize);
 });
-
 /* Theme toggle */
 function applyTheme(theme) {
   if (theme === "dark") {
@@ -568,22 +620,18 @@ function applyTheme(theme) {
     themeToggleBtn.textContent = "Dark mode";
   }
 }
-
 function loadTheme() {
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
   let theme = stored || "light";
   applyTheme(theme);
   return theme;
 }
-
 let currentTheme = loadTheme();
-
 themeToggleBtn.addEventListener("click", () => {
   currentTheme = currentTheme === "dark" ? "light" : "dark";
   applyTheme(currentTheme);
   localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
 });
-
 // Initial load
 loadNotes();
 updateOutput();

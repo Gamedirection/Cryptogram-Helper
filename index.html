@@ -250,7 +250,31 @@ body.dark-mode .mapping-input.has-value {
 
 <h2 style="margin-top: 20px;">Notes</h2>
 <textarea id="notes" placeholder="Write any solving notes, patterns, or observations here..."></textarea>
-  
+
+<h2 style="margin-top: 20px;">How to Solve Cryptograms</h2>
+<details>
+<p>A cryptogram is a puzzle where a message is encoded with a simple substitution cipher. Each plaintext letter is consistently replaced by a different letter for the entire puzzle. Your goal is to decode the original text.</p>
+<hr>
+<h3>Tips:</h3>
+<p>
+  <li>Look for common letters (E, T, A, O, I, N, S, H, R).</li>
+  <li>One-letter words are usually A or I.</li>
+  <li>Two-letter words often include OF, TO, IN, IT, IS, AT,AS, AN, OR, ON.</li>
+  <li>Apostrophes and contractions (DON'T, CAN'T, IT'S) offer quick clues.</li>
+  <li>Double letters (LL, EE, SS) can be revealing.
+  <li>Use the provided hints for a helpful start.</li>
+</p>
+<hr>
+<h3>More Tips:</h3>
+<h4>Worked Example</h4>
+<p>
+  Cipher:
+  <code>KMQZ PMFYMMH FCM JUHMV</code>
+  <li>Spot small words: the 3-letter pattern likely maps to "THE".</li>
+  <li>Once you deduce <code>F</code>=<code>T</code>, <code>M</code>=<code>E</code>, <code>C</code>=<code>H</code>, fill those across the puzzle.</li>
+  <li>The same substitution applies everywhere until the full phrase emerges.</li>
+</p>
+</details>
 <script>
 const highlightStates = [
   "highlight-none",

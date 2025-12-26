@@ -22,4 +22,8 @@ It will use the Crypto letters if nothing is filled; I like to use ? or _ to hel
 
 <img width="1650" height="871" alt="image" src="https://github.com/user-attachments/assets/b61992f4-c3e2-4842-83cd-d9b0efd47785" />
 
+Updated the toggle with a "_" to help better visualize without noise. Also added a counter to show how many characters words have. 
+<img width="738" height="221" alt="image" src="https://github.com/user-attachments/assets/ae49de19-da0b-4b47-88e0-69dcda70ab72" />
+
+
 Note: Should save data to your cookies so you can reopen it later. :D

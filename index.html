@@ -254,6 +254,11 @@ body.dark-mode .mapping-input.has-value {
     <input type="checkbox" id="wordCountToggle">
     Show character count per word
   </label>
+  &nbsp;&nbsp;
+  <label>
+    <input type="checkbox" id="underscoreToggle">
+    Show _ for unmapped letters
+  </label>
 </div>
 
 <div id="outputText" class="output-box"></div>
@@ -305,6 +310,7 @@ const copyBtn = document.getElementById("copyBtn");
 const copyStatus = document.getElementById("copyStatus");
 const notesEl = document.getElementById("notes");
 const wordCountToggle = document.getElementById("wordCountToggle");
+const underscoreToggle = document.getElementById("underscoreToggle");
 // Font size controls
 const fontSmallerBtn = document.getElementById("fontSmallerBtn");
 const fontResetBtn = document.getElementById("fontResetBtn");
@@ -384,27 +390,31 @@ function updateOutput() {
     const upper = ch.toUpperCase();
     if (upper >= "A" && upper <= "Z") {
       const map = mappings[upper];
+      let outChar;
+      let colorIndex = 0;
+
       if (map && map.char) {
+        // Mapped letter
         const mappedChar = map.char[0];
         const isUpper = ch === ch.toUpperCase();
-        const outChar = isUpper
+        outChar = isUpper
           ? mappedChar.toUpperCase()
           : mappedChar.toLowerCase();
-        const span = document.createElement("span");
-        span.textContent = outChar;
-        const colorIndex = map.colorIndex || 0;
-        if (colorIndex > 0) {
-          span.classList.add(highlightStates[colorIndex]);
-        }
-        charSpans.push(span);
+        colorIndex = map.colorIndex || 0;
       } else {
-        const span = document.createElement("span");
-        span.textContent = ch;
-        charSpans.push(span);
+        // Unmapped letter: either original cipher letter or underscore
+        if (underscoreToggle.checked) {
+          outChar = "_";
+        } else {
+          outChar = ch;
+        }
       }
-    } else {
+
       const span = document.createElement("span");
-      span.textContent = ch;
+      span.textContent = outChar;
+      if (colorIndex > 0) {
+        span.classList.add(highlightStates[colorIndex]);
+      }
       charSpans.push(span);
     }
   }
@@ -513,6 +523,7 @@ letters.forEach((letter, index) => {
 });
 inputText.addEventListener("input", updateOutput);
 wordCountToggle.addEventListener("change", updateOutput);
+underscoreToggle.addEventListener("change", updateOutput);
 resetBtn.addEventListener("click", () => {
   if (!confirm("Clear all mappings and colors?")) return;
   letters.forEach(letter => {

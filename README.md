@@ -26,4 +26,8 @@ Updated the toggle with a "_" to help better visualize without noise. Also added
 <img width="738" height="221" alt="image" src="https://github.com/user-attachments/assets/ae49de19-da0b-4b47-88e0-69dcda70ab72" />
 
 
+Updated to highlight duplicated letters
+<img width="1635" height="250" alt="image" src="https://github.com/user-attachments/assets/f00fd363-77d6-4e14-9e04-71733f91ea48" />
+
+
 Note: Should save data to your cookies so you can reopen it later. :D

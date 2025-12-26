@@ -435,6 +435,7 @@ function updateOutput() {
   if (currentWordSpans.length > 0) {
     appendWordBlock(currentWordSpans);
   }
+  recomputeDuplicateHighlights();
 }
 
 // Helper: word + count
@@ -498,6 +499,7 @@ letters.forEach((letter, index) => {
     }
     saveMappings();
     updateOutput();
+    recomputeDuplicateHighlights();
   });
   cipherSpan.addEventListener("click", () => {
     let idx = mappings[letter].colorIndex || 0;
@@ -506,6 +508,7 @@ letters.forEach((letter, index) => {
     applyHighlightToLetter(letter, idx);
     saveMappings();
     updateOutput();
+    recomputeDuplicateHighlights();
   });
 });
 inputText.addEventListener("input", updateOutput);
@@ -604,12 +607,36 @@ fontLargerBtn.addEventListener("click", () => {
   currentFontSize = Math.min(40, currentFontSize + 1);
   applyFontSize(currentFontSize);
   localStorage.setItem(FONT_STORAGE_KEY, currentFontSize);
-});
+});applyHighlightToLetter
 fontResetBtn.addEventListener("click", () => {
   currentFontSize = DEFAULT_FONT_SIZE;
   applyFontSize(currentFontSize);
   localStorage.setItem(FONT_STORAGE_KEY, currentFontSize);
 });
+// Recalculate which letters map to duplicate plaintext values
+// and force their alphabet-row highlight to red (index 3).
+function recomputeDuplicateHighlights() {
+  const counts = {};
+  // Count how many times each non-empty mapping is used
+  letters.forEach(letter => {
+    const ch = (mappings[letter].char || "").toUpperCase();
+    if (!ch) return;
+    counts[ch] = (counts[ch] || 0) + 1;
+  });
+
+  letters.forEach(letter => {
+    const ch = (mappings[letter].char || "").toUpperCase();
+    const isDuplicate = ch && counts[ch] > 1;
+
+    if (isDuplicate) {
+      // Force red for alphabet-row for this letter
+      applyHighlightToLetter(letter, 3); // 3 = highlight-red
+    } else {
+      // Use the user-chosen color for non-duplicates
+      applyHighlightToLetter(letter, mappings[letter].colorIndex || 0);
+    }
+  });
+}
 /* Theme toggle */
 function applyTheme(theme) {
   if (theme === "dark") {
@@ -635,6 +662,7 @@ themeToggleBtn.addEventListener("click", () => {
 // Initial load
 loadNotes();
 updateOutput();
+recomputeDuplicateHighlights();
 </script>
 </body>
 </html>

@@ -21,3 +21,5 @@ Will highlight in the output to show confidence. :D
 It will use the Crypto letters if nothing is filled; I like to use ? or _ to help visualize what I need to add.
 
 <img width="1650" height="871" alt="image" src="https://github.com/user-attachments/assets/b61992f4-c3e2-4842-83cd-d9b0efd47785" />
+
+Note: Should save data to your cookies so you can reopen it later. :D

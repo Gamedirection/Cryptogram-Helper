@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Cryptogram Letter Tracker with Highlighted Output</title>
+<style>
+:root {
+  --bg-color: #f2f2f2;
+  --text-color: #000000;
+  --box-bg: #ffffff;
+  --box-border: #cccccc;
+  --button-bg: #ffffff;
+  --button-border: #888888;
+  --button-hover-bg: #f0f0f0;
+}
+
+/* Dark theme overrides */
+body.dark-mode {
+  --bg-color: #1e1e1e;
+  --text-color: #f5f5f5;
+  --box-bg: #2a2a2a;
+  --box-border: #555555;
+  --button-bg: #333333;
+  --button-border: #888888;
+  --button-hover-bg: #444444;
+}
+
+/* Highlight states (used for letters, mapping inputs, and output) */
+/* Made much more visible with solid backgrounds and borders */
+.highlight-none {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: inherit !important;
+}
+.highlight-green {
+  background-color: #27ae60 !important;
+  border-color: #27ae60 !important;
+  color: #ffffff !important;
+}
+.highlight-yellow {
+  background-color: #f1c40f !important;
+  border-color: #f1c40f !important;
+  color: #000000 !important;
+}
+.highlight-red {
+  background-color: #e74c3c !important;
+  border-color: #e74c3c !important;
+  color: #ffffff !important;
+}
+
+/* Base styles (font unchanged) */
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+  
+h1 {
+  margin-bottom: 10px;
+}
+  
+.small-note {
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 10px;
+}
+body.dark-mode .small-note {
+  color: #aaaaaa;
+}
+  
+.alphabet-row {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 6px;
+  column-gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+  
+.letter-pair {
+  display: inline-flex;
+  align-items: center;
+  font-size: 18px;
+  margin-right: 4px;
+}
+  
+.cipher-letter {
+  display: inline-block;
+  min-width: 16px;
+  text-align: center;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  user-select: none;
+  background-color: var(--box-bg);
+  color: var(--text-color);
+}
+  
+.equals-sign {
+  margin: 0 4px;
+}
+  
+.mapping-input {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+  padding: 2px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: var(--box-bg);
+  color: var(--text-color);
+}
+  
+.controls {
+  margin: 15px 0;
+}
+  
+textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 6px;
+  font-family: monospace;
+  font-size: 14px;
+  margin-bottom: 6px;
+  box-sizing: border-box;
+}
+
+/* keep original appearance for inputText */
+#inputText {
+  background: var(--box-bg);
+  border: 1px solid var(--box-border);
+  color: var(--text-color);
+}
+  
+.output-box {
+  background: #ffffff;
+  border: 1px solid #ccc;
+  padding: 6px;
+  min-height: 60px;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+/* Adjust output/notes background to respect theme */
+body.dark-mode .output-box {
+  background: var(--box-bg);
+  border-color: var(--box-border);
+}
+
+/* Notes area */
+#notes {
+  width: 100%;
+  min-height: 80px;
+  padding: 6px;
+  font-family: monospace;
+  font-size: 14px;
+  margin-top: 4px;
+  box-sizing: border-box;
+  background: var(--box-bg);
+  border: 1px solid var(--box-border);
+  color: var(--text-color);
+}
+  
+button {
+  padding: 6px 10px;
+  margin-right: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--text-color);
+}
+  
+button:hover {
+  background: var(--button-hover-bg);
+}
+  
+#copyStatus {
+  font-size: 11px;
+  color: #555;
+}
+body.dark-mode #copyStatus {
+  color: #aaaaaa;
+}
+
+/* Top-right controls bar */
+.top-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.small-btn {
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+/* Extra visual emphasis for mapped letter cells, without changing font */
+.mapping-input.has-value {
+  font-weight: bold;
+  border-color: #555;
+}
+body.dark-mode .mapping-input.has-value {
+  border-color: #ddd;
+}
+</style>
+</head>
+<body>
+  
+<div class="top-controls">
+  <div>
+    Text size:
+    <button id="fontSmallerBtn" class="small-btn">A-</button>
+    <button id="fontResetBtn" class="small-btn">A</button>
+    <button id="fontLargerBtn" class="small-btn">A+</button>
+  </div>
+  <button id="themeToggleBtn" class="small-btn">Dark mode</button>
+</div>
+
+<h1>Cryptogram Letter Tracker</h1>
+  
+<div class="small-note">
+    A = [ ], B = [ ], C = [ ] ...  
+    Click a letter to cycle highlight: none, green, yellow, red, none.  
+    Output characters are highlighted to match the cipher letter that produced them.
+</div>
+  
+<div class="alphabet-row" id="alphabetRow"></div>
+  
+<div class="controls">
+<button id="resetBtn">Reset All</button>
+</div>
+  
+<h2>Cryptogram Text</h2>
+<textarea id="inputText" placeholder="Paste or type your cryptogram here (ex: ABC)..."></textarea>
+  
+<h3>Transformed Output</h3>
+<div id="outputText" class="output-box"></div>
+  
+<div style="margin-top: 8px;">
+<button id="copyBtn">Copy Output</button>
+<span id="copyStatus"></span>
+</div>
+
+<h2 style="margin-top: 20px;">Notes</h2>
+<textarea id="notes" placeholder="Write any solving notes, patterns, or observations here..."></textarea>
+  
+<script>
+const highlightStates = [
+  "highlight-none",
+  "highlight-green",
+  "highlight-yellow",
+  "highlight-red"
+];
+
+const COOKIE_NAME = "cryptogramLetterMappings_highlighted";
+const COOKIE_DAYS = 365;
+
+const alphabetRow = document.getElementById("alphabetRow");
+const inputText = document.getElementById("inputText");
+const outputText = document.getElementById("outputText");
+const resetBtn = document.getElementById("resetBtn");
+const copyBtn = document.getElementById("copyBtn");
+const copyStatus = document.getElementById("copyStatus");
+const notesEl = document.getElementById("notes");
+
+// Font size controls
+const fontSmallerBtn = document.getElementById("fontSmallerBtn");
+const fontResetBtn = document.getElementById("fontResetBtn");
+const fontLargerBtn = document.getElementById("fontLargerBtn");
+
+// Theme toggle
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+
+// Defaults and state keys
+const DEFAULT_FONT_SIZE = 14;
+const FONT_STORAGE_KEY = "cryptogramFontSize";
+const THEME_STORAGE_KEY = "cryptogramTheme";
+const NOTES_STORAGE_KEY = "cryptogramNotes";
+
+function setCookie(name, value, days) {
+  const d = new Date();
+  d.setTime(d.getTime() + (days*24*60*60*1000));
+  const expires = "expires=" + d.toUTCString();
+  document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+}
+
+function getCookie(name) {
+  const cname = name + "=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i].trim();
+    if (c.indexOf(cname) === 0) {
+      return c.substring(cname.length, c.length);
+    }
+  }
+  return "";
+}
+
+function loadMappings() {
+  const cookieVal = getCookie(COOKIE_NAME);
+  if (!cookieVal) return {};
+  try {
+    return JSON.parse(cookieVal);
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveMappings() {
+  setCookie(COOKIE_NAME, JSON.stringify(mappings), COOKIE_DAYS);
+}
+
+// { A: { char: "t", colorIndex: 0 }, ... }
+let mappings = loadMappings();
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+// Ensure defaults
+letters.forEach(letter => {
+  if (!mappings[letter]) {
+    mappings[letter] = { char: "", colorIndex: 0 };
+  } else {
+    if (typeof mappings[letter].char !== "string") mappings[letter].char = "";
+    if (typeof mappings[letter].colorIndex !== "number") mappings[letter].colorIndex = 0;
+  }
+});
+
+// Apply highlight to both cipher span and its input
+function applyHighlightToLetter(letter, colorIndex) {
+  const cls = highlightStates[colorIndex] || "highlight-none";
+  const cells = document.querySelectorAll(
+    '.cipher-letter[data-letter="' + letter + '"],' +
+    '.mapping-input[data-letter="' + letter + '"]'
+  );
+  cells.forEach(el => {
+    highlightStates.forEach(h => el.classList.remove(h));
+    if (colorIndex > 0) {
+      el.classList.add(cls);
+    }
+  });
+}
+
+function updateOutput() {
+  const text = inputText.value;
+  outputText.innerHTML = "";  // we will build spans
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const upper = ch.toUpperCase();
+    if (upper >= "A" && upper <= "Z") {
+      const map = mappings[upper];
+      if (map && map.char) {
+        const mappedChar = map.char[0];
+        const isUpper = ch === ch.toUpperCase();
+        const outChar = isUpper
+          ? mappedChar.toUpperCase()
+          : mappedChar.toLowerCase();
+
+        const span = document.createElement("span");
+        span.textContent = outChar;
+
+        const colorIndex = map.colorIndex || 0;
+        if (colorIndex > 0) {
+          span.classList.add(highlightStates[colorIndex]);
+        }
+
+        outputText.appendChild(span);
+      } else {
+        const span = document.createElement("span");
+        span.textContent = ch;
+        outputText.appendChild(span);
+      }
+    } else {
+      const span = document.createElement("span");
+      span.textContent = ch;
+      outputText.appendChild(span);
+    }
+  }
+}
+
+// Build "A = [ ], B = [ ] ..." row
+letters.forEach((letter, index) => {
+  const pair = document.createElement("span");
+  pair.className = "letter-pair";
+
+  const cipherSpan = document.createElement("span");
+  cipherSpan.className = "cipher-letter";
+  cipherSpan.textContent = letter;
+  cipherSpan.dataset.letter = letter;
+
+  const equalsSpan = document.createElement("span");
+  equalsSpan.className = "equals-sign";
+  equalsSpan.textContent = "=";
+
+  const input = document.createElement("input");
+  input.className = "mapping-input";
+  input.type = "text";
+  input.maxLength = 1;
+  input.dataset.letter = letter;
+
+  if (mappings[letter].char) {
+    input.value = mappings[letter].char;
+    input.classList.add("has-value");
+  }
+
+  pair.appendChild(cipherSpan);
+  pair.appendChild(equalsSpan);
+  pair.appendChild(input);
+  alphabetRow.appendChild(pair);
+
+  if (index < letters.length - 1) {
+    const comma = document.createElement("span");
+    comma.textContent = ",";
+    comma.style.marginRight = "4px";
+    alphabetRow.appendChild(comma);
+  }
+
+  // Apply initial highlight to both cipher letter and its input box
+  applyHighlightToLetter(letter, mappings[letter].colorIndex);
+
+  input.addEventListener("input", () => {
+    const v = input.value ? input.value[0] : "";
+    mappings[letter].char = v;
+    if (v) {
+      input.value = v;
+      input.classList.add("has-value");
+    } else {
+      input.classList.remove("has-value");
+    }
+    saveMappings();
+    updateOutput();
+  });
+
+  cipherSpan.addEventListener("click", () => {
+    let idx = mappings[letter].colorIndex || 0;
+    idx = (idx + 1) % highlightStates.length;
+    mappings[letter].colorIndex = idx;
+    applyHighlightToLetter(letter, idx);
+    saveMappings();
+    updateOutput();
+  });
+});
+
+inputText.addEventListener("input", updateOutput);
+
+resetBtn.addEventListener("click", () => {
+  if (!confirm("Clear all mappings and colors?")) return;
+
+  letters.forEach(letter => {
+    mappings[letter] = { char: "", colorIndex: 0 };
+  });
+
+  document.querySelectorAll(".mapping-input").forEach(inp => {
+    inp.value = "";
+    inp.classList.remove("has-value");
+  });
+  letters.forEach(letter => applyHighlightToLetter(letter, 0));
+
+  saveMappings();
+  updateOutput();
+});
+
+copyBtn.addEventListener("click", () => {
+  const text = outputText.textContent;
+  if (!text) {
+    copyStatus.textContent = "Nothing to copy.";
+    setTimeout(() => copyStatus.textContent = "", 1500);
+    return;
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    copyStatus.textContent = "Copied.";
+    setTimeout(() => copyStatus.textContent = "", 1500);
+  }).catch(() => {
+    copyStatus.textContent = "Copy failed.";
+    setTimeout(() => copyStatus.textContent = "", 1500);
+  });
+});
+
+/* Notes persistence */
+function loadNotes() {
+  const stored = localStorage.getItem(NOTES_STORAGE_KEY);
+  if (stored != null) {
+    notesEl.value = stored;
+  }
+}
+notesEl.addEventListener("input", () => {
+  localStorage.setItem(NOTES_STORAGE_KEY, notesEl.value);
+});
+
+/* Font size controls - do not change font, only scale size */
+function applyFontSize(size) {
+  inputText.style.fontSize = size + "px";
+  outputText.style.fontSize = size + "px";
+  notesEl.style.fontSize = size + "px";
+}
+
+function loadFontSize() {
+  const stored = localStorage.getItem(FONT_STORAGE_KEY);
+  let size = DEFAULT_FONT_SIZE;
+  if (stored) {
+    const parsed = parseInt(stored, 10);
+    if (!isNaN(parsed) && parsed > 8 && parsed < 40) {
+      size = parsed;
+    }
+  }
+  applyFontSize(size);
+  return size;
+}
+
+let currentFontSize = loadFontSize();
+
+fontSmallerBtn.addEventListener("click", () => {
+  currentFontSize = Math.max(8, currentFontSize - 1);
+  applyFontSize(currentFontSize);
+  localStorage.setItem(FONT_STORAGE_KEY, currentFontSize);
+});
+
+fontLargerBtn.addEventListener("click", () => {
+  currentFontSize = Math.min(40, currentFontSize + 1);
+  applyFontSize(currentFontSize);
+  localStorage.setItem(FONT_STORAGE_KEY, currentFontSize);
+});
+
+fontResetBtn.addEventListener("click", () => {
+  currentFontSize = DEFAULT_FONT_SIZE;
+  applyFontSize(currentFontSize);
+  localStorage.setItem(FONT_STORAGE_KEY, currentFontSize);
+});
+
+/* Theme toggle */
+function applyTheme(theme) {
+  if (theme === "dark") {
+    document.body.classList.add("dark-mode");
+    themeToggleBtn.textContent = "Light mode";
+  } else {
+    document.body.classList.remove("dark-mode");
+    themeToggleBtn.textContent = "Dark mode";
+  }
+}
+
+function loadTheme() {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  let theme = stored || "light";
+  applyTheme(theme);
+  return theme;
+}
+
+let currentTheme = loadTheme();
+
+themeToggleBtn.addEventListener("click", () => {
+  currentTheme = currentTheme === "dark" ? "light" : "dark";
+  applyTheme(currentTheme);
+  localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+});
+
+// Initial load
+loadNotes();
+updateOutput();
+</script>
+</body>
+</html>

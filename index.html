@@ -383,18 +383,19 @@ function applyHighlightToLetter(letter, colorIndex) {
 function updateOutput() {
   const text = inputText.value;
 
-  // Build transformed spans linearly
+  // Build transformed spans linearly, preserving non-letters
   const charSpans = [];
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     const upper = ch.toUpperCase();
+
     if (upper >= "A" && upper <= "Z") {
+      // Letter: possibly mapped, possibly underscore
       const map = mappings[upper];
       let outChar;
       let colorIndex = 0;
 
       if (map && map.char) {
-        // Mapped letter
         const mappedChar = map.char[0];
         const isUpper = ch === ch.toUpperCase();
         outChar = isUpper
@@ -402,8 +403,8 @@ function updateOutput() {
           : mappedChar.toLowerCase();
         colorIndex = map.colorIndex || 0;
       } else {
-        // Unmapped letter: either original cipher letter or underscore
-        if (underscoreToggle.checked) {
+        // Unmapped letter: underscore or original letter
+        if (underscoreToggle && underscoreToggle.checked) {
           outChar = "_";
         } else {
           outChar = ch;
@@ -416,6 +417,11 @@ function updateOutput() {
         span.classList.add(highlightStates[colorIndex]);
       }
       charSpans.push(span);
+    } else {
+      // Not a letter (space, punctuation, digits, etc.): keep as-is
+      const span = document.createElement("span");
+      span.textContent = ch;
+      charSpans.push(span);
     }
   }
 
@@ -426,17 +432,20 @@ function updateOutput() {
     return;
   }
 
-  // If on, group into words separated by spaces
+  // If on, group into words separated by *actual* spaces
   outputText.innerHTML = "";
   let currentWordSpans = [];
   for (let i = 0; i < charSpans.length; i++) {
     const span = charSpans[i];
     const ch = span.textContent;
+
     if (ch === " ") {
+      // End current word, output it with count
       if (currentWordSpans.length > 0) {
         appendWordBlock(currentWordSpans);
         currentWordSpans = [];
       }
+      // Preserve the space itself
       outputText.appendChild(document.createTextNode(" "));
     } else {
       currentWordSpans.push(span);
@@ -445,6 +454,7 @@ function updateOutput() {
   if (currentWordSpans.length > 0) {
     appendWordBlock(currentWordSpans);
   }
+
   recomputeDuplicateHighlights();
 }
 
